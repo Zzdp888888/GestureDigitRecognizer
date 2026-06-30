@@ -25,6 +25,32 @@ class CustomNet(nn.Module):
         super(CustomNet, self).__init__()
 
         # START----------------------------------------------------------
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.AdaptiveAvgPool2d((1, 1)),
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Dropout(p=0.35),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.2),
+            nn.Linear(128, 10),
+        )
 
         # END------------------------------------------------------------
 
@@ -33,6 +59,9 @@ class CustomNet(nn.Module):
         在本方法中，请完成对神经网络前向传播计算的定义。
         """
         # START----------------------------------------------------------
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
 
         # END------------------------------------------------------------
 

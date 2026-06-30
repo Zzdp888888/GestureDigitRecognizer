@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------
 
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor, Lambda
+from torchvision.transforms import ToTensor
 from PIL import Image
 
 
@@ -23,7 +23,7 @@ class CustomDataset(Dataset):
             self.labels = [line.strip('\n').split(" ") for line in f.readlines()]
         self.img_dir = img_dir                            # 训练样本所在的目录
         self.transform = transform()                      # 需应用的图像变换方法
-        self.target_transform = Lambda(lambda y: int(y))  # 标签转换方法
+        self.target_transform = int                       # 标签转换为整数（内置函数，可 pickle）
 
     def __len__(self):
         return len(self.labels)
@@ -43,7 +43,8 @@ class CustomDataset(Dataset):
 
 if __name__ == "__main__":
     # 测试
-    c = CustomDataset('./images/train.txt', './images/train', ToTensor)    # 实例化
+    # c = CustomDataset('./images/train.txt', './images/train', ToTensor)    # 实例化
+    c = CustomDataset('./images/chinese/train.txt', './images/chinese/train', ToTensor)    # 实例化
     for label in c.labels:
         print(label)            # 打印所有训练数据的文件名及标注信息
     print(len(c))               # 打印数据集长度，测试__len__方法

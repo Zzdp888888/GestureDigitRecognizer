@@ -1,0 +1,75 @@
+{
+  "name": "GestureDigitRecognizer_model",
+  "version": "2026.06.30-GestureDigitRecognizer",
+  "updated_at": "2026-06-30 15:20",
+  "type": "gesture_digit_recognizer",
+  "description": "面向 0-9 中国手势数字识别的多模型协同识别模型，集成 ROI 预处理、逐数字专家权重和易混数字校正。",
+  "base_models": {
+    "guide": "models/model_0-5test_own.pkl",
+    "chinese_aug": "models/chinese_cnn_0_9_aug.pkl",
+    "efficientnet_b0": "models/chinese_efficientnet_b0_grouped_0_9.pth",
+    "resnet34": "models/chinese_resnet34_grouped_0_9.pth",
+    "chinese_reference": "models/model_chinesetest_own.pkl"
+  },
+  "reliable_chinese_order": [
+    "resnet34",
+    "efficientnet_b0",
+    "chinese_aug"
+  ],
+  "reference_only_models": [
+    "chinese"
+  ],
+  "specialist_weight_boosts": {
+    "resnet34": {
+      "0": 1.06,
+      "1": 1.28,
+      "2": 1.24,
+      "3": 0.92,
+      "4": 1.22,
+      "8": 1.06
+    },
+    "chinese_aug": {
+      "1": 2.85,
+      "3": 0.95
+    },
+    "efficientnet_b0": {
+      "6": 1.48,
+      "7": 1.24,
+      "9": 1.05
+    }
+  },
+  "guide_digit_weights": {
+    "0": 0.56,
+    "3": 0.1
+  },
+  "model_probability_calibration": {
+    "resnet34": {
+      "8": 0.72
+    }
+  },
+  "adjustments": {
+    "three_hit_lock": {
+      "enabled": true,
+      "resnet_min_confidence": 0.35,
+      "chinese_aug_min_confidence": 0.35,
+      "strong_non3_agreement_min_confidence": 0.82,
+      "score_multiplier": 1.28,
+      "min_over_current_max": 1.015
+    },
+    "eight_two_confusion": {
+      "enabled": true,
+      "resnet_8_vs_2_ratio": 0.72,
+      "ensemble_8_vs_2_ratio": 0.62,
+      "near_top_ratio": 0.35,
+      "boost_8": 1.32,
+      "dampen_2": 0.88
+    },
+    "seven_specialist": {
+      "enabled": true,
+      "efficientnet_7_min_probability": 0.45,
+      "ensemble_near_top_ratio": 0.58,
+      "boost_7": 1.22
+    }
+  },
+  "display_name": "手势数字识别模型"
+}

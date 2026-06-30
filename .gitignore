@@ -1,2 +1,29 @@
-/.idea
-/__pycache__
+# IDE / Python cache
+.idea/
+__pycache__/
+*.py[cod]
+
+# Runtime outputs and temporary evaluation caches
+outputs/
+*.log
+*.pid
+
+# Report temporary files
+~$*.docx
+report/~$*.docx
+
+# Local datasets and imported upstream projects are too large for normal Git.
+# Keep dataset index txt files under images/ in the repository.
+extra_data/
+images/chinese/bac/
+images/chinese/0-5/
+
+# Process archive is useful locally, but contains old model packages,
+# duplicated datasets and exploratory scripts. Keep final docs instead.
+实验过程归档/misc/
+实验过程归档/models_old/
+实验过程归档/docs_old/
+
+# OS noise
+Thumbs.db
+.DS_Store

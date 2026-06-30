@@ -23,6 +23,22 @@ def inference(image_path, model, device):
     model.eval()
 
     # START----------------------------------------------------------
+    image = Image.open(image_path).convert("RGB")
+    transform = ToTensor()
+    image_tensor = transform(image)
+    image_tensor = torch.unsqueeze(image_tensor, 0).to(device)
+
+    with torch.no_grad():
+        output = model(image_tensor)
+        probability = torch.softmax(output, dim=1)
+        confidence, predicted = torch.max(probability, 1)
+        predicted_class = predicted.item()
+
+    print(f"图片路径: {image_path}")
+    print(f"预测结果: {predicted_class}")
+    print(f"置信度: {confidence.item():.2%}")
+    print(f"模型输出: {output}")
+    return predicted_class
 
     # END------------------------------------------------------------
 
@@ -32,7 +48,7 @@ if __name__ == "__main__":
     image_path = "./images/test/signs/img_0006.png"
 
     # 加载训练好的模型
-    model = torch.load('./models/model.pkl')
+    model = torch.load('./models/model_0-5test_own.pkl', weights_only=False)
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
