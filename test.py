@@ -27,13 +27,24 @@ def test(dataloader, model, device):
     correct_num = 0                 # 预测正确的样本数
 
     # START----------------------------------------------------------
+    with torch.no_grad():
+        for sample in dataloader:
+            X = sample['image'].to(device)
+            y = sample['label'].to(device)
+            pred = model(X)
+            predicted = pred.argmax(1)
+            correct_num += (predicted == y).type(torch.float).sum().item()
+
+    accuracy = correct_num / size
+    print("Test Error:")
+    print(f" Accuracy: {accuracy:.2%}, Correct: {int(correct_num)}/{size}")
 
     # END------------------------------------------------------------
 
 
 if __name__ == "__main__":
     # 加载训练好的模型
-    model = torch.load('./models/model.pkl')
+    model = torch.load('./models/model_0-5test_own.pkl', weights_only=False)
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:

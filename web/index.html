@@ -1,0 +1,753 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>手势数字识别 Web 端</title>
+  <style>
+    :root {
+      --ink: #1d1d1f;
+      --muted: #6e7480;
+      --panel: rgba(255, 255, 255, .78);
+      --panel-strong: rgba(255, 255, 255, .92);
+      --line: rgba(80, 96, 120, .16);
+      --accent: #5b8def;
+      --accent-2: #73d6b7;
+      --surface: rgba(255,255,255,.62);
+      --surface-strong: rgba(255,255,255,.78);
+      --header-bg: rgba(255,255,255,.52);
+      --button-ink: #1f2937;
+      --button-ink-2: #38445a;
+      --bg: #f5f7fb;
+      --danger: #d45c48;
+      --shadow: 0 18px 48px rgba(65, 83, 110, .13);
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+      --radius-md: 18px;
+      --page-bg: linear-gradient(145deg, #f9fbff 0%, #edf4ff 42%, #f8fbf7 100%);
+    }
+    body[data-theme="dark"] {
+      --ink: #edf2ff;
+      --muted: #9aa8bd;
+      --panel: rgba(20, 28, 42, .78);
+      --panel-strong: rgba(25, 35, 52, .92);
+      --line: rgba(176, 191, 216, .18);
+      --accent: #84a9ff;
+      --accent-2: #7ce0c3;
+      --surface: rgba(24, 35, 53, .68);
+      --surface-strong: rgba(31, 44, 65, .82);
+      --header-bg: rgba(21, 31, 47, .68);
+      --button-ink: #e7eefc;
+      --button-ink-2: #92a4c2;
+      --bg: #0d1421;
+      --danger: #ff917f;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .26);
+      --page-bg: linear-gradient(145deg, #0c1320 0%, #132033 54%, #0e1a18 100%);
+    }
+    * { box-sizing: border-box; }
+    html { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Microsoft YaHei", "Segoe UI", sans-serif;
+      background: var(--page-bg);
+    }
+    .shell {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 14px 16px 10px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 104px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--header-bg);
+      box-shadow: 0 14px 36px rgba(82, 101, 128, .11);
+      backdrop-filter: blur(22px);
+    }
+    h1 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: 1; letter-spacing: 0; font-weight: 800; }
+    .subtitle { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .meta-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .version-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      padding: 5px 9px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .theme-toggle {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      box-shadow: none;
+      font-size: 12px;
+    }
+    .metrics { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--surface-strong);
+      padding: 8px 10px;
+      min-width: 96px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(96, 119, 148, .08);
+    }
+    .metric strong { display: block; font-size: 18px; }
+    .metric span { color: var(--muted); font-size: 11px; }
+    main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+      gap: 14px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px);
+      overflow: hidden;
+      min-height: 0;
+    }
+    .upload {
+      height: 100%;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 12px;
+    }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    button, .file-btn {
+      border: 1px solid rgba(40, 61, 95, .08);
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--button-ink), var(--button-ink-2));
+      color: #fff;
+      min-height: 36px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 12px 30px rgba(36, 52, 78, .18);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    button:hover, .file-btn:hover { transform: translateY(-1px); box-shadow: 0 16px 36px rgba(36, 52, 78, .22); }
+    button.secondary { background: var(--surface-strong); color: var(--ink); box-shadow: none; }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .mode-select { display: none; }
+    input[type=file] { display: none; }
+    .dropzone {
+      border: 1.5px dashed rgba(94, 116, 150, .28);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .dropzone.drag { border-color: rgba(91,141,239,.65); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+    .drop-hint { text-align: center; color: var(--muted); }
+    .drop-hint b { display: block; color: var(--ink); font-size: 22px; margin-bottom: 8px; }
+    .preview {
+      max-width: min(94%, 720px);
+      max-height: min(94%, calc(100vh - 250px));
+      object-fit: contain;
+      image-rendering: auto;
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel-strong);
+      box-shadow: 0 18px 38px rgba(77, 96, 122, .16);
+    }
+    .result {
+      height: 100%;
+      padding: 18px 20px;
+      display: grid;
+      grid-template-rows: minmax(270px, .95fr) minmax(210px, auto);
+      gap: 12px;
+      min-height: 0;
+    }
+    .result-main {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(150px, 1fr) 44px 96px;
+      gap: 8px;
+    }
+    .badge { color: var(--accent); font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .digit {
+      width: 100%;
+      height: 100%;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(86px, 12vw, 172px);
+      line-height: .85;
+      font-weight: 900;
+      letter-spacing: 0;
+      margin: 0;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .confidence {
+      font-size: 16px;
+      color: var(--muted);
+      min-height: 44px;
+      height: 44px;
+      line-height: 1.32;
+      max-width: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      overflow-wrap: anywhere;
+    }
+    .digit.idle {
+      width: 100%;
+      min-height: 150px;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 78%, transparent), color-mix(in srgb, var(--accent) 8%, transparent));
+    }
+    .ready-orb {
+      width: clamp(58px, 7vw, 86px);
+      height: clamp(58px, 7vw, 86px);
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+      background:
+        radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent-2) 56%, transparent) 0 12%, transparent 13%),
+        radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 62%);
+      box-shadow: inset 0 0 0 12px color-mix(in srgb, var(--accent) 8%, transparent), 0 18px 38px rgba(65,83,110,.14);
+    }
+    body[data-theme="dark"] .ready-orb { box-shadow: inset 0 0 0 12px rgba(132,169,255,.08), 0 18px 38px rgba(0,0,0,.22); }
+    .bars { display: grid; gap: 9px; min-height: 96px; height: 96px; align-content: start; }
+    .bar-row { display: grid; grid-template-columns: 34px 1fr 58px; align-items: center; gap: 10px; }
+    .bar-row.placeholder { color: transparent; }
+    .bar-row.placeholder .track { opacity: .42; }
+    .track { height: 12px; background: color-mix(in srgb, var(--surface) 78%, var(--muted)); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: inherit; transition: width .35s ease; }
+    .compare-list { margin-top: 14px; display: none; gap: 7px; min-height: 42px; }
+    .compare-row {
+      display: grid;
+      grid-template-columns: minmax(108px, 1fr) 34px 72px;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      padding: 7px 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .compare-row.active { border-color: rgba(91,141,239,.46); color: var(--ink); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+    .compare-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .result-details { min-height: 0; display: grid; grid-template-rows: 34px auto minmax(92px, 1fr); align-content: end; }
+    .status { color: var(--muted); min-height: 22px; margin: 0; align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .live-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 0;
+      align-content: start;
+    }
+    .live-stat {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .roi-panel {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+    .roi-thumb {
+      width: 86px;
+      height: 86px;
+      object-fit: contain;
+      border-radius: 14px;
+      border: 1px solid rgba(80,96,120,.14);
+      background: var(--panel-strong);
+      display: block;
+      opacity: 0;
+    }
+    .roi-title { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+    .roi-state { margin: 0; font-size: 14px; font-weight: 800; color: var(--ink); }
+    .roi-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .roi-ok { color: #16835d; }
+    .roi-warn { color: #b65b23; }
+    .error { color: var(--danger); }
+    footer { color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; min-height: 18px; }
+    .deerflow-mark {
+      color: rgba(103, 113, 130, .58);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .deerflow-mark:hover { color: var(--ink); }
+    @media (max-width: 860px) {
+      html, body { overflow: auto; height: auto; }
+      .shell { height: auto; min-height: 100vh; }
+      header, main { grid-template-columns: 1fr; }
+      .metrics { justify-content: flex-start; }
+      .upload, .result { min-height: auto; }
+      .dropzone { min-height: 320px; }
+    }
+    @media (max-height: 760px) and (min-width: 861px) {
+      .shell { padding: 10px 12px 8px; gap: 9px; }
+      header { min-height: 82px; padding: 10px 14px; border-radius: 20px; }
+      h1 { font-size: 30px; }
+      .subtitle { display: none; }
+      .meta-line { margin-top: 6px; }
+      .metric { padding: 6px 9px; min-width: 86px; }
+      .metric strong { font-size: 16px; }
+      .upload { padding: 14px; }
+      .result { padding: 14px 18px; }
+      .result { grid-template-rows: minmax(225px, .92fr) minmax(178px, auto); }
+      .result-main { grid-template-rows: auto minmax(108px, 1fr) 38px 78px; }
+      .digit { min-height: 108px; font-size: 104px; }
+      .digit.idle { min-height: 108px; border-radius: 22px; }
+      .confidence { min-height: 40px; font-size: 16px; }
+      .bars { gap: 7px; height: 78px; min-height: 78px; }
+      .roi-thumb { width: 68px; height: 68px; }
+      .roi-panel { grid-template-columns: 68px 1fr; padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>手势数字识别系统</h1>
+        <p class="subtitle">基于 PyTorch CNN 模型，支持上传图片和摄像头实时识别 0-9 手势数字。</p>
+        <div class="meta-line">
+          <span class="version-pill">UI v2026.06.30-1536</span>
+          <span>最后更新时间：2026-06-30 15:36</span>
+          <span id="modelBadge">当前模型：加载中</span>
+          <button class="theme-toggle" id="themeToggle" type="button">深色</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><strong>手势数字识别模型</strong><span>0-9 多模型协同识别</span></div>
+        <div class="metric"><strong>0-9</strong><span>识别范围</span></div>
+        <div class="metric"><strong id="modelMetric">CUDA</strong><span id="modelMetricLabel">运行设备</span></div>
+      </div>
+    </header>
+    <main>
+      <section class="panel upload">
+        <div class="toolbar">
+          <label class="file-btn" for="fileInput">上传图片</label>
+          <button class="secondary" id="cameraBtn" type="button">开启摄像头</button>
+          <button class="secondary" id="liveBtn" type="button" disabled>开始实时</button>
+          <input class="mode-select" id="modeSelect" type="hidden" value="auto">
+          <button class="secondary" id="clearBtn" type="button">清空</button>
+        </div>
+        <input id="fileInput" type="file" accept="image/*">
+        <div class="dropzone" id="dropzone">
+          <div class="drop-hint" id="dropHint"><b>拖入或上传手势图片</b>也可以开启摄像头进行实时识别。</div>
+          <img id="preview" class="preview" alt="待识别手势图片">
+          <video id="cameraPreview" class="preview" autoplay muted playsinline></video>
+        </div>
+      </section>
+      <section class="panel result">
+        <div class="result-main">
+          <div class="badge">识别结果</div>
+          <div class="digit idle" id="digit"><span class="ready-orb"></span></div>
+          <div class="confidence" id="confidence">准备就绪</div>
+          <div class="bars" id="bars"></div>
+          <div class="compare-list" id="compareList"></div>
+        </div>
+        <div class="result-details">
+          <p class="status" id="status">上传图片或开启摄像头后，结果会显示在这里。</p>
+          <div class="live-stats">
+            <span class="live-stat" id="fpsStat">FPS --</span>
+            <span class="live-stat" id="latencyStat">响应 -- ms</span>
+            <span class="live-stat" id="frameStat">帧数 0</span>
+            <span class="live-stat" id="confidenceHint">场景提示 --</span>
+            <span class="live-stat" id="detectorStat">手部检测 --</span>
+          </div>
+          <div class="roi-panel">
+            <img id="roiPreview" class="roi-thumb" alt="手部裁剪预览">
+            <div>
+              <p class="roi-title">识别前裁剪 ROI</p>
+              <p class="roi-state" id="roiState">等待输入</p>
+              <p class="roi-note" id="roiNote">摄像头复杂场景会先定位手部，再送入数字分类模型。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>Web 端应用 - 上传图片识别 / 摄像头实时识别</span>
+      <span><span id="modelFooter">模型状态：加载中</span> · <a class="deerflow-mark" href="https://deerflow.tech" target="_blank" rel="noreferrer">Created By Deerflow</a></span>
+    </footer>
+  </div>
+  <canvas id="cameraCanvas" width="640" height="640" hidden></canvas>
+  <script>
+    const API = "/api/predict";
+    const DEBUG_MODE = new URLSearchParams(location.search).get("debug") === "1";
+    const fileInput = document.querySelector("#fileInput");
+    const dropzone = document.querySelector("#dropzone");
+    const preview = document.querySelector("#preview");
+    const cameraPreview = document.querySelector("#cameraPreview");
+    const cameraCanvas = document.querySelector("#cameraCanvas");
+    const dropHint = document.querySelector("#dropHint");
+    const digit = document.querySelector("#digit");
+    const confidence = document.querySelector("#confidence");
+    const bars = document.querySelector("#bars");
+    const compareList = document.querySelector("#compareList");
+    const statusEl = document.querySelector("#status");
+    const cameraBtn = document.querySelector("#cameraBtn");
+    const liveBtn = document.querySelector("#liveBtn");
+    const fpsStat = document.querySelector("#fpsStat");
+    const latencyStat = document.querySelector("#latencyStat");
+    const frameStat = document.querySelector("#frameStat");
+    const confidenceHint = document.querySelector("#confidenceHint");
+    const detectorStat = document.querySelector("#detectorStat");
+    const roiPreview = document.querySelector("#roiPreview");
+    const roiState = document.querySelector("#roiState");
+    const roiNote = document.querySelector("#roiNote");
+    const modelBadge = document.querySelector("#modelBadge");
+    const modelMetric = document.querySelector("#modelMetric");
+    const modelMetricLabel = document.querySelector("#modelMetricLabel");
+    const modelFooter = document.querySelector("#modelFooter");
+    const modeSelect = document.querySelector("#modeSelect");
+    const themeToggle = document.querySelector("#themeToggle");
+    let cameraStream = null;
+    let liveTimer = null;
+    let liveRunning = false;
+    let predicting = false;
+    let frameCount = 0;
+    let liveStartedAt = 0;
+    let predictSeq = 0;
+    let latestRenderedSeq = 0;
+    let loadedModels = {};
+    const LIVE_INTERVAL = 170;
+
+    function applyTheme(theme) {
+      document.body.dataset.theme = theme;
+      localStorage.setItem("gesture-theme", theme);
+      themeToggle.textContent = theme === "dark" ? "浅色" : "深色";
+    }
+
+    const savedTheme = localStorage.getItem("gesture-theme");
+    const preferredTheme = window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    applyTheme(savedTheme || preferredTheme);
+    themeToggle.addEventListener("click", () => {
+      applyTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+    });
+
+    function setStatus(text, isError = false) {
+      statusEl.textContent = text;
+      statusEl.className = isError ? "status error" : "status";
+    }
+
+    function setIdleResult() {
+      digit.className = "digit idle";
+      digit.innerHTML = '<span class="ready-orb"></span>';
+      confidence.textContent = "准备就绪";
+      bars.innerHTML = [0, 1, 2].map(() => (
+        '<div class="bar-row placeholder"><b>0</b><div class="track"><div class="fill" style="width:0%"></div></div><span>0.0%</span></div>'
+      )).join("");
+      compareList.innerHTML = "";
+      compareList.style.display = "none";
+    }
+    setIdleResult();
+
+    function showPreview(src) {
+      stopLive(false);
+      stopCamera(false);
+      preview.src = src;
+      preview.style.display = "block";
+      cameraPreview.style.display = "none";
+      dropHint.style.display = "none";
+    }
+
+    function showCamera() {
+      preview.style.display = "none";
+      cameraPreview.style.display = "block";
+      dropHint.style.display = "none";
+    }
+
+    function updateLiveStats(latencyMs = null) {
+      if (!liveStartedAt || frameCount === 0) {
+        fpsStat.textContent = "FPS --";
+      } else {
+        const elapsedSeconds = Math.max((performance.now() - liveStartedAt) / 1000, 0.001);
+        fpsStat.textContent = `FPS ${(frameCount / elapsedSeconds).toFixed(1)}`;
+      }
+      if (latencyMs !== null) latencyStat.textContent = `响应 ${Math.round(latencyMs)} ms`;
+      frameStat.textContent = `帧数 ${frameCount}`;
+    }
+
+    function renderResult(result, options = {}) {
+      digit.className = "digit";
+      digit.textContent = result.digit;
+      const detailParts = [`置信度 ${(result.confidence * 100).toFixed(2)}%`, result.device, "手势数字识别模型"];
+      confidence.textContent = detailParts.join(" · ");
+      const detectorName = result.detector || "--";
+      const roiSize = result.roi_size ? `${result.roi_size.width}x${result.roi_size.height}` : "--";
+      const segmentationText = result.segmentation_applied
+        ? `分割已启用 ${(result.mask_coverage * 100).toFixed(1)}%`
+        : `仅 ROI 裁剪`;
+      detectorStat.textContent = result.hand_detected ? `手部检测 已定位` : `手部检测 兜底`;
+      roiState.textContent = result.hand_detected ? `已定位手部 · ${detectorName}` : `未稳定定位 · ${detectorName}`;
+      roiState.className = result.hand_detected ? "roi-state roi-ok" : "roi-state roi-warn";
+      roiNote.textContent = `${result.detector_message || "已完成 ROI 预处理"} · ROI ${roiSize} · ${segmentationText}`;
+      if (result.crop_preview) {
+        roiPreview.src = result.crop_preview;
+        roiPreview.style.opacity = "1";
+      }
+      if (!result.hand_detected) {
+        confidenceHint.textContent = "场景提示 请让手靠近画面中央";
+      } else if (result.confidence < 0.7) {
+        confidenceHint.textContent = "场景提示 低置信度";
+      } else if (result.source_size && Math.max(result.source_size.width, result.source_size.height) > 1000) {
+        confidenceHint.textContent = "场景提示 高分辨率输入";
+      } else {
+        confidenceHint.textContent = "场景提示 正常";
+      }
+      bars.innerHTML = "";
+      result.top3.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `<b>${item.digit}</b><div class="track"><div class="fill" style="width:${item.confidence * 100}%"></div></div><span>${(item.confidence * 100).toFixed(1)}%</span>`;
+        bars.appendChild(row);
+      });
+      renderCompare(result);
+      if (!options.keepStatus) setStatus("识别完成。");
+    }
+
+    function renderCompare(result) {
+      compareList.innerHTML = "";
+      compareList.style.display = DEBUG_MODE ? "grid" : "none";
+      if (!DEBUG_MODE) return;
+      const rows = Object.values(result.model_results || {});
+      if (!rows.length) return;
+      rows
+        .sort((a, b) => {
+          if (a.key === result.model_key) return -1;
+          if (b.key === result.model_key) return 1;
+          const aRef = a.model_meta?.reference_only ? 1 : 0;
+          const bRef = b.model_meta?.reference_only ? 1 : 0;
+          if (aRef !== bRef) return aRef - bRef;
+          return b.confidence - a.confidence;
+        })
+        .forEach(item => {
+          const row = document.createElement("div");
+          row.className = `compare-row ${item.key === result.model_key ? "active" : ""}`;
+          const refMark = item.model_meta?.reference_only ? " · 参考" : "";
+          row.innerHTML = `<span class="compare-name">${item.label || item.key}${refMark}</span><b>${item.digit}</b><span>${(item.confidence * 100).toFixed(1)}%</span>`;
+          compareList.appendChild(row);
+        });
+    }
+
+    async function predict(dataUrl, statusText = "正在识别...", options = {}) {
+      setStatus(statusText);
+      const seq = ++predictSeq;
+      const started = performance.now();
+      const response = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl, mode: modeSelect.value })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "识别失败");
+      if (options.dropStale && seq < predictSeq) return null;
+      latestRenderedSeq = seq;
+      renderResult(result, options);
+      return performance.now() - started;
+    }
+
+    function captureFrame() {
+      if (!cameraPreview.videoWidth) return null;
+      const ctx = cameraCanvas.getContext("2d");
+      ctx.drawImage(cameraPreview, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      return cameraCanvas.toDataURL("image/png");
+    }
+
+    async function predictCameraFrame() {
+      if (predicting) return;
+      const frame = captureFrame();
+      if (!frame) return;
+      predicting = true;
+      try {
+        const latency = await predict(frame, "实时识别中...", { keepStatus: true, dropStale: true });
+        if (latency === null) return;
+        frameCount += 1;
+        updateLiveStats(latency);
+        setStatus(`实时识别中：${frameCount} 帧，手部 ROI 前置裁剪，目标间隔 ${LIVE_INTERVAL} ms。`);
+      } catch (err) {
+        setStatus(err.message, true);
+      } finally {
+        predicting = false;
+        if (liveRunning) {
+          liveTimer = window.setTimeout(predictCameraFrame, LIVE_INTERVAL);
+        }
+      }
+    }
+
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: "user" },
+          audio: false
+        });
+        cameraPreview.srcObject = cameraStream;
+        showCamera();
+        cameraBtn.textContent = "关闭摄像头";
+        liveBtn.disabled = false;
+        setStatus("摄像头已开启，点击“开始实时”进行连续识别。");
+      } catch (err) {
+        setStatus("无法打开摄像头，请检查浏览器权限或改用图片上传。", true);
+      }
+    }
+
+    function stopCamera(resetText = true) {
+      stopLive(false);
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraPreview.srcObject = null;
+      cameraPreview.style.display = "none";
+      cameraBtn.textContent = "开启摄像头";
+      liveBtn.textContent = "开始实时";
+      liveBtn.disabled = true;
+      frameCount = 0;
+      liveStartedAt = 0;
+      updateLiveStats();
+      if (resetText) setStatus("摄像头已关闭。");
+    }
+
+    function startLive() {
+      if (!cameraStream) {
+        setStatus("请先开启摄像头。", true);
+        return;
+      }
+      liveRunning = true;
+      frameCount = 0;
+      liveStartedAt = performance.now();
+      updateLiveStats();
+      predictCameraFrame();
+      liveBtn.textContent = "停止实时";
+      setStatus(`实时识别已开始，目标间隔 ${LIVE_INTERVAL} ms，响应越快帧率越高。`);
+    }
+
+    function stopLive(resetText = true) {
+      if (liveTimer) {
+        window.clearTimeout(liveTimer);
+        liveTimer = null;
+      }
+      liveRunning = false;
+      liveBtn.textContent = "开始实时";
+      if (resetText) setStatus("实时识别已停止。");
+    }
+
+    function readFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        showPreview(reader.result);
+        predict(reader.result).catch(err => setStatus(err.message, true));
+      };
+      reader.readAsDataURL(file);
+    }
+
+    fileInput.addEventListener("change", () => readFile(fileInput.files[0]));
+    cameraBtn.addEventListener("click", () => {
+      if (cameraStream) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
+    });
+    liveBtn.addEventListener("click", () => {
+      if (liveTimer) {
+        stopLive();
+      } else {
+        startLive();
+      }
+    });
+    document.querySelector("#clearBtn").addEventListener("click", () => {
+      stopLive(false);
+      stopCamera(false);
+      fileInput.value = "";
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      cameraPreview.style.display = "none";
+      dropHint.style.display = "block";
+      setIdleResult();
+      detectorStat.textContent = "手部检测 --";
+      confidenceHint.textContent = "场景提示 --";
+      roiPreview.removeAttribute("src");
+      roiPreview.style.opacity = "0";
+      roiState.textContent = "等待输入";
+      roiState.className = "roi-state";
+      roiNote.textContent = "摄像头复杂场景会先定位手部，再送入数字分类模型。";
+      frameCount = 0;
+      liveStartedAt = 0;
+      updateLiveStats();
+      setStatus("上传图片或开启摄像头后，结果会显示在这里。");
+    });
+    ["dragenter", "dragover"].forEach(evt => dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.add("drag");
+    }));
+    ["dragleave", "drop"].forEach(evt => dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.remove("drag");
+    }));
+    dropzone.addEventListener("drop", e => readFile(e.dataTransfer.files[0]));
+
+    fetch("/health")
+      .then(response => response.json())
+      .then(info => {
+        loadedModels = info.models || {};
+        modeSelect.value = "auto";
+        const modelPackage = info.packaged_model || {};
+        const rawVersion = modelPackage.version || info.ensemble_package?.version || "--";
+        const version = String(rawVersion);
+        const displayName = modelPackage.display_name || "手势数字识别模型";
+        const label = `${displayName} · ${version}`;
+        modelBadge.textContent = `当前模型：${label}`;
+        modelMetric.textContent = String(info.device || "--").toUpperCase();
+        modelMetricLabel.textContent = "引擎已加载";
+        modelFooter.textContent = `模型状态：${displayName}已加载 · ${label}`;
+      })
+      .catch(() => {
+        modelBadge.textContent = "当前模型：读取失败";
+        modelFooter.textContent = "模型状态：读取失败";
+      });
+  </script>
+</body>
+</html>
